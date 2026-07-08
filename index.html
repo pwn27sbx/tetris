@@ -1,52 +1,211 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tetris en JavaScript</title>
+  <title>Tetris Arcade | Sebastian</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=block" rel="stylesheet">
+
   <style>
     :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+      --bg-dark: #0a0a0a;
+      --bg-panel: #111111;
+      --jade-green: #00A889;
+      --text-main: #eeeeee;
+      --text-muted: #666666;
+      --board-bg: #050505;
+      --board-border: #333333;
+    }
 
-  color-scheme: dark light;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-}
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
 
-body {
-  margin: 0;
-  padding: 0;
-  display: grid;
-  place-content: center;
-}
+    .font-anton {
+      font-family: 'Anton', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
 
-section {
-  position: absolute;
-  background: black;
-  width: 100vw;
-  height: 100hw;
-  top: 0;
-  inset: 0;
-  display: grid;
-  font-size: 48px;
-  place-content: center;
-}
+    /* HEADER */
+    header {
+      width: 100%;
+      padding: 2rem;
+      text-align: center;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    h1 {
+      font-size: 3rem;
+      color: var(--text-main);
+      margin-bottom: 0.2rem;
+    }
+
+    .subtitle {
+      font-size: 0.75rem;
+      color: var(--jade-green);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    /* MAIN CONTAINER */
+    #app-container {
+      display: flex;
+      gap: 3rem;
+      align-items: flex-end;
+      margin-top: 4rem;
+    }
+
+    /* CANVAS AREA */
+    .board-wrapper {
+      position: relative;
+      padding: 1rem;
+      background: var(--bg-panel);
+      border-radius: 4px;
+      border: 1px solid var(--board-border);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+
+    canvas {
+      background: var(--board-bg);
+      display: block;
+      /* Se aplicará un filtro tenue para darle un aspecto más 'retro-moderno' */
+      filter: contrast(1.1) brightness(1.2);
+    }
+
+    /* PANTALLA DE INICIO (OVERLAY) */
+    #start-screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(4px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+
+    .play-btn {
+      font-size: 2.5rem;
+      color: var(--jade-green);
+      margin-bottom: 1rem;
+      transition: transform 0.2s;
+    }
+
+    #start-screen:hover .play-btn {
+      transform: scale(1.05);
+      color: #fff;
+    }
+
+    .instructions {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    /* UI LATERAL */
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      padding-bottom: 1rem;
+    }
+
+    .score-box {
+      background: var(--bg-panel);
+      padding: 1.5rem 2rem;
+      border-left: 4px solid var(--jade-green);
+      border-radius: 2px;
+    }
+
+    .score-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .score-value {
+      font-size: 3.5rem;
+      line-height: 1;
+      color: var(--text-main);
+    }
+
+    .controls-hint {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+    }
+
+    .key {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      background: #222;
+      border-radius: 4px;
+      color: #aaa;
+      margin: 0 0.2rem;
+      border-bottom: 2px solid #111;
+    }
   </style>
 </head>
 <body>
-  <div id="app">
-    <section>Haz click aquí para jugar</section>
-    <canvas></canvas>  
+
+  <header>
+    <h1 class="font-anton">Tetris Arcade</h1>
+    <div class="subtitle">JavaScript Engine</div>
+  </header>
+
+  <div id="app-container">
+
+    <div class="board-wrapper">
+      <div id="start-screen">
+        <div class="play-btn font-anton">Jugar Ahora</div>
+        <div class="instructions">Haz clic para iniciar<br/>usa las flechas para mover</div>
+      </div>
+      <canvas></canvas>
+    </div>
+
+    <div class="side-panel">
+      <div class="score-box">
+        <div class="score-label">Puntuación</div>
+        <div class="score-value font-anton" id="score-display">0</div>
+      </div>
+
+      <div class="controls-hint">
+        <div><span class="key">↑</span> Rotar</div>
+        <div style="margin-top: 8px;"><span class="key">←</span> <span class="key">↓</span> <span class="key">→</span> Mover</div>
+      </div>
+    </div>
+
   </div>
-  <strong>Puntuación: <span></span></strong>
+
   <script>
     /* constantes */
     const BLOCK_SIZE = 20
@@ -60,43 +219,22 @@ section {
     }
 
     const PIECES = [
-      [ // la pieza amarilla
-        [1, 1],
-        [1, 1]
-      ],
-      [
-        [1, 1, 1, 1]
-      ],
-      [ // es la pieza lila
-        [0, 1, 0],
-        [1, 1, 1]
-      ],
-      [ // la pieza verde
-        [1, 1, 0],
-        [0, 1, 1]
-      ],
-      [
-        [0, 1, 1],
-        [1, 1, 0]
-      ],
-      [
-        [1, 0],
-        [1, 0],
-        [1, 1]
-      ],
-      [
-        [0, 1],
-        [0, 1],
-        [1, 1]
-      ]
+      [ [1, 1], [1, 1] ],
+      [ [1, 1, 1, 1] ],
+      [ [0, 1, 0], [1, 1, 1] ],
+      [ [1, 1, 0], [0, 1, 1] ],
+      [ [0, 1, 1], [1, 1, 0] ],
+      [ [1, 0], [1, 0], [1, 1] ],
+      [ [0, 1], [0, 1], [1, 1] ]
     ]
 
     /* juego */
-    // 1. inicializar el canvas
     const canvas = document.querySelector('canvas')
     const context = canvas.getContext('2d')
-    const $score = document.querySelector('span')
-    const $section = document.querySelector('section')
+    const $scoreDisplay = document.getElementById('score-display')
+    const $startScreen = document.getElementById('start-screen')
+
+    // NOTA: Asegúrate de tener esta ruta correcta o maneja errores si falla la carga del audio
     const audio = new window.Audio('https://video.aprendejs.dev/tetris.mp3')
 
     let score = 0
@@ -106,167 +244,8 @@ section {
 
     context.scale(BLOCK_SIZE, BLOCK_SIZE)
 
-    // 3. board
-    // const board = createBoard(BOARD_WIDTH, BOARD_HEIGHT)
+    const board = Array(BOARD_HEIGHT).fill().map(() => Array(BOARD_WIDTH).fill(0))
 
-    const board = [
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0
-      ],
-      [
-        1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1,
-        0, 0
-      ],
-      [
-        1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1,
-        0, 0
-      ]
-    ]
-
-    function createBoard (width, height) {
-      return Array(height).fill().map(() => Array(width).fill(0))
-    }
-
-    // 4. pieza player
     const piece = {
       position: { x: 5, y: 5 },
       shape: [
@@ -275,20 +254,12 @@ section {
       ]
     }
 
-    // 2. game loop
-    // function update () {
-    //   draw()
-    //   window.requestAnimationFrame(update)
-    // }
-
-    // 8. auto drop
     let dropCounter = 0
     let lastTime = 0
 
     function update (time = 0) {
       const deltaTime = time - lastTime
       lastTime = time
-
       dropCounter += deltaTime
 
       if (dropCounter > 1000) {
@@ -307,14 +278,15 @@ section {
     }
 
     function draw () {
-      // todo el tablero
-      context.fillStyle = '#000'
+      // Usar color oscuro sólido para limpiar el canvas
+      context.fillStyle = '#050505'
       context.fillRect(0, 0, canvas.width, canvas.height)
 
       board.forEach((row, y) => {
         row.forEach((value, x) => {
           if (value === 1) {
-            context.fillStyle = 'yellow'
+            // Color de las piezas ya solidificadas (gris claro premium)
+            context.fillStyle = '#444'
             context.fillRect(x, y, 1, 1)
           }
         })
@@ -323,28 +295,30 @@ section {
       piece.shape.forEach((row, y) => {
         row.forEach((value, x) => {
           if (value) {
-            context.fillStyle = 'red'
+            // Color de la pieza que cae (verde jade de tu marca)
+            context.fillStyle = '#00A889'
             context.fillRect(x + piece.position.x, y + piece.position.y, 1, 1)
           }
         })
       })
 
-      $score.innerText = score
+      $scoreDisplay.innerText = score
     }
 
     document.addEventListener('keydown', event => {
+      // Prevenir el scroll de la página al usar las flechas (UX vital)
+      if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(event.code) > -1) {
+          event.preventDefault();
+      }
+
       if (event.key === EVENT_MOVEMENTS.LEFT) {
         piece.position.x--
-        if (checkCollision()) {
-          piece.position.x++
-        }
+        if (checkCollision()) { piece.position.x++ }
       }
 
       if (event.key === EVENT_MOVEMENTS.RIGHT) {
         piece.position.x++
-        if (checkCollision()) {
-          piece.position.x--
-        }
+        if (checkCollision()) { piece.position.x-- }
       }
 
       if (event.key === EVENT_MOVEMENTS.DOWN) {
@@ -358,23 +332,16 @@ section {
 
       if (event.key === 'ArrowUp') {
         const rotated = []
-
-        // ESTO ES LO MÁS COMPLICADO DE LEJOS
         for (let i = 0; i < piece.shape[0].length; i++) {
           const row = []
-
           for (let j = piece.shape.length - 1; j >= 0; j--) {
             row.push(piece.shape[j][i])
           }
-
           rotated.push(row)
         }
-
         const previousShape = piece.shape
         piece.shape = rotated
-        if (checkCollision()) {
-          piece.shape = previousShape
-        }
+        if (checkCollision()) { piece.shape = previousShape }
       }
     })
 
@@ -397,33 +364,28 @@ section {
           }
         })
       })
-
       resetPiece()
     }
 
     function resetPiece () {
-      // reset position
       piece.position.x = Math.floor(BOARD_WIDTH / 2 - 2)
       piece.position.y = 0
-      // get random shape
       piece.shape = PIECES[Math.floor(Math.random() * PIECES.length)]
-      // gameover
       if (checkCollision()) {
-        window.alert('Game over!! Sorry!')
+        window.alert('Game over! Tu puntuación final es: ' + score)
         board.forEach((row) => row.fill(0))
         score = 0
+        $scoreDisplay.innerText = score
       }
     }
 
     function removeRows () {
       const rowsToRemove = []
-
       board.forEach((row, y) => {
         if (row.every(value => value === 1)) {
           rowsToRemove.push(y)
         }
       })
-
       rowsToRemove.forEach(y => {
         board.splice(y, 1)
         const newRow = Array(BOARD_WIDTH).fill(0)
@@ -432,12 +394,19 @@ section {
       })
     }
 
-    $section.addEventListener('click', () => {
+    // Iniciar juego
+    $startScreen.addEventListener('click', () => {
+      // Esconder la pantalla de inicio
+      $startScreen.style.opacity = '0';
+      setTimeout(() => {
+        $startScreen.style.display = 'none';
+      }, 300);
+
       update()
 
-      $section.remove()
-      audio.volume = 0.01
-      audio.play()
+      // Manejar el audio de forma segura
+      audio.volume = 0.05 // Reduje el volumen para que sea menos intrusivo
+      audio.play().catch(e => console.log("Audio autoplay prevented by browser"));
     })
   </script>
 </body>
